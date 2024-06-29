@@ -3,8 +3,21 @@ using GameStore_api.Dto;
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
+// Location 1: before routing runs, endpoint is always null here.
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"1. Endpoint: {context.GetEndpoint()?.DisplayName ?? "(null)"}");
+    await next(context);
+});
 
 app.UseRouting();
+
+// Location 2: after routing runs, endpoint will be non-null if routing found a match.
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"2. Endpoint: {context.GetEndpoint()?.DisplayName ?? "(null)"}");
+    await next(context);
+});
 
 app.Use(async (context, next) =>
 {
@@ -31,6 +44,15 @@ app.Use(async (context, next) =>
     await next(context);
 });
 
-    app.MapGet("/", () => "Route").WithDisplayName("Test Name");
+app.MapGet("/", () => "Route").WithDisplayName("Test Name");
+
+app.UseEndpoints(_ => { });
+
+// Location 3: runs after UseEndpoints - will only run if there was no match.
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"3. Endpoint: {context.GetEndpoint()?.DisplayName ?? "(null)"}");
+    await next(context);
+});
 
 app.Run();
